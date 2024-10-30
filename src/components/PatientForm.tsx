@@ -1,13 +1,36 @@
 import { useForm } from "react-hook-form"
 import Error from "./Error"
 import { DraftPatient } from "../types"
+import { usePatientStore } from "../store"
+import { useEffect } from "react"
 
 export default function PatientForm() {
+    const addPatient = usePatientStore(state => state.addPatient)
+    const activeId = usePatientStore(state => state.activeId)
+    const patients = usePatientStore(state => state.patients)
+    const updatePatient = usePatientStore(state => state.updatePatient)
 
-    const { register, handleSubmit, formState: { errors }, } = useForm<DraftPatient>()
+    const { register, handleSubmit, setValue, formState: { errors }, reset } = useForm<DraftPatient>()
+
+    useEffect(() => {
+        if(activeId) {
+            const activePatient = patients.filter(patient => patient.id === activeId)[0]
+            setValue("name", activePatient.name)
+            setValue("caretaker", activePatient.caretaker)
+            setValue("date", activePatient.date)
+            setValue("email", activePatient.email)
+            setValue("symptoms", activePatient.symptoms)
+        }
+    }, [activeId])
 
     const registerPatient = (data: DraftPatient) => {
-        console.log(data)
+        if(activeId) {
+            updatePatient(data)
+        } else {
+            addPatient(data)
+        }
+        
+        reset()
     }
 
     return (
@@ -22,7 +45,7 @@ export default function PatientForm() {
             <form
                 className="bg-white shadow-md rounded-lg py-10 px-5 mb-10"
                 noValidate
-                onClick={handleSubmit(registerPatient)}
+                onSubmit={handleSubmit(registerPatient)}
             >
                 <div className="mb-5">
                     <label htmlFor="name" className="text-sm uppercase font-bold">
@@ -30,7 +53,7 @@ export default function PatientForm() {
                     </label>
                     <input
                         id="name"
-                        className="w-full p-3  border border-gray-100"
+                        className="w-full p-3 borderborder-gray-100"
                         type="text"
                         placeholder="Nombre del Paciente"
                         {...register("name", {
@@ -128,6 +151,7 @@ export default function PatientForm() {
                 </div>
 
                 <input
+                    id="save"
                     type="submit"
                     className="bg-indigo-600 w-full p-3 text-white uppercase font-bold hover:bg-indigo-700 cursor-pointer transition-colors"
                     value='Guardar Paciente'
